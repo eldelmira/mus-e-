@@ -92,7 +92,58 @@
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
         }
+        let mediaRecorder;
+        let audioChunks = [];
+        
+        document.getElementById("startRecord").addEventListener("click", async () => {
+            let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+            
+            mediaRecorder.onstop = () => {
+                let audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                let audioUrl = URL.createObjectURL(audioBlob);
+                let audioPlayback = document.getElementById("audioPlayback");
+                audioPlayback.src = audioUrl;
+                
+                let downloadLink = document.getElementById("downloadLink");
+                downloadLink.href = audioUrl;
+                downloadLink.download = "enregistrement.mp3";
+                downloadLink.style.display = "block";
+                downloadLink.innerText = "Télécharger l'audio";
+            };
+            
+            mediaRecorder.start();
+            document.getElementById("startRecord").disabled = true;
+            document.getElementById("stopRecord").disabled = false;
+        });
+        
+        document.getElementById("stopRecord").addEventListener("click", () => {
+            mediaRecorder.stop();
+            document.getElementById("startRecord").disabled = false;
+            document.getElementById("stopRecord").disabled = true;
+        });
     </script>
-    <footer>ELDELMIRA SHINE KANIKATHIR </footer>
+    <center>
+        <div class="media-controls">
+            <br>
+            <button id="startRecord">Démarrer l'enregistrement</button>
+            <br>
+
+            <button id="stopRecord" disabled>Arrêter l'enregistrement</button>
+<br>
+<br>            <audio id="audioPlayback" controls></audio>
+<br>
+
+            <a id="downloadLink" style="display:none">Télécharger l'audio</a>
+        </div>
+    </div>
+    </center>
+    <center>
+    <footer style="color: darkblue; font-size: larger;">ELDELMIRA SHINE KANIKATHIR SETH DIYAR </footer>
+</center>
 </body>
 </html>
