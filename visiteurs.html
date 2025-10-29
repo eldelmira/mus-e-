@@ -1,40 +1,127 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exposition Virtuelle du Louvre</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <style>
-        body { margin: 0; font-family: Arial, sans-serif; }
-        header { background: #222; color: teal; padding: 10px; text-align: center; }
-        .info { text-align: center; padding: 10px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Exposition Virtuelle du Louvre</title>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <style>
+    :root { --overlay-z: 9999; }
+    html,body { height:100%; margin:0; font-family: Arial, sans-serif; background:#f4f4f4; }
+
+    /* === Overlays fixes au-dessus de la scène === */
+    .overlay-header {
+      position: fixed; top: 8px; left: 0; right: 0;
+      text-align: center; z-index: var(--overlay-z);
+      pointer-events: none; /* laisse passer les clics vers la scène */
+    }
+    .overlay-header .title {
+      display: inline-block; padding: 8px 14px; border-radius: 10px;
+      background:#222c; color: #00b3b3; font-weight: 700; font-size: 1.1rem;
+    }
+
+    .overlay-topbar {
+      position: fixed; top: 8px; left: 8px; z-index: var(--overlay-z);
+      pointer-events: auto; /* bouton cliquable */
+    }
+    .btn {
+      background: teal; color: #fff; border: none; border-radius: 8px;
+      padding: 10px 14px; cursor: pointer; font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+    .btn a { color:#fff; text-decoration: none; }
+
+    .hint {
+      position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+      z-index: var(--overlay-z); pointer-events:none;
+      background:#0008; color:#fff; padding:6px 10px; border-radius:8px; font-size:.9rem;
+    }
+
+    /* La scène prend toute la hauteur */
+    a-scene { height: 100vh; width: 100vw; }
+  </style>
 </head>
 <body>
-    <header>Exposition Virtuelle du Louvre</header>
-    <div class="info">Cliquez sur les œuvres pour en savoir plus.</div>
-    <br>
-    <button><a href="index.html" style="text-decoration: none;">Retour</a></button>
-    <a-scene>
-        <a-assets>
-            <img id="mona-lisa" src="image1.jpg">
-            <img id="venus-de-milo" src="image2.jpg">
-            <img id="winged-victory" src="image3.jpg">
-        </a-assets>
-        <a-sky color="white"></a-sky>
-        <a-plane position="0 0 -4" rotation="-90 0 0" width="10" height="10" color="white"></a-plane>
-        <a-image src="image1.jpg" position="-2 1 -3" width="1.5" height="2" onclick="showInfo('La Joconde', 'Peinte par Léonard de Vinci au début du 16ème siècle.')"></a-image>
-        <a-image src="image2.jpg" position="0 1 -3" width="1.5" height="2" onclick="showInfo('Vénus de Milo', 'Sculpture grecque antique datant d\'environ 100 av. J.-C.')"></a-image>
-        <a-image src="image3.jpg" position="2 1 -3" width="1.5" height="2" onclick="showInfo('Victoire de Samothrace', 'Sculpture hellénistique du 2ème siècle av. J.-C.')"></a-image>
-    </a-scene>
-    <script>
-        function showInfo(title, description) {
-            alert(title + '\\n' + description);
-        }
-    </script>
 
+  <!-- Titre fixe -->
+  <div class="overlay-header">
+    <div class="title">Exposition Virtuelle du Louvre</div>
+  </div>
 
+  <!-- Bouton Retour fixe -->
+  <div class="overlay-topbar">
+    <button class="btn"><a href="index.html">Retour</a></button>
+  </div>
+
+  <!-- Astuce fixe -->
+  <div class="hint">Cliquez sur une œuvre pour afficher sa bulle d’info.</div>
+
+  <a-scene renderer="antialias: true; alpha: true">
+    <!-- Caméra + curseur souris -->
+    <a-entity position="0 1.6 0">
+      <a-entity camera look-controls
+                cursor="rayOrigin: mouse"
+                raycaster="objects: .clickable"></a-entity>
+    </a-entity>
+
+    <a-assets>
+      <img id="mona-lisa" src="image1.jpg">
+      <img id="venus-de-milo" src="image2.jpg">
+      <img id="winged-victory" src="image3.jpg">
+    </a-assets>
+
+    <a-sky color="#f2efe9"></a-sky>
+    <a-plane position="0 0 -4" rotation="-90 0 0" width="10" height="10" color="white"></a-plane>
+
+    <!-- Œuvres -->
+    <a-image class="clickable" src="#mona-lisa" position="-2 1 -3" width="1.5" height="2"
+             info-bubble="title: La Joconde; desc: Peinte par Léonard de Vinci au début du 16ème siècle."></a-image>
+
+    <a-image class="clickable" src="#venus-de-milo" position="0 1 -3" width="1.5" height="2"
+             info-bubble="title: Vénus de Milo; desc: Sculpture grecque antique datant d’environ 100 av. J.-C."></a-image>
+
+    <a-image class="clickable" src="#winged-victory" position="2 1 -3" width="1.5" height="2"
+             info-bubble="title: Victoire de Samothrace; desc: Sculpture hellénistique du 2ème siècle av. J.-C."></a-image>
+  </a-scene>
+
+  <script>
+    function clearBubbles(){ document.querySelectorAll('.infoBubble').forEach(b=>b.remove()); }
+
+    AFRAME.registerComponent('info-bubble',{
+      schema:{ title:{type:'string'}, desc:{type:'string'} },
+      init:function(){
+        this.el.addEventListener('click', ()=>{
+          clearBubbles();
+          const scene = this.el.sceneEl;
+          const p = this.el.getAttribute('position');
+          const bubble = document.createElement('a-entity');
+          bubble.classList.add('infoBubble');
+          bubble.setAttribute('position', `${p.x} ${parseFloat(p.y)+1.5} ${p.z}`);
+
+          const plane = document.createElement('a-plane');
+          plane.setAttribute('width','2.8'); plane.setAttribute('height','1.1');
+          plane.setAttribute('color','black'); plane.setAttribute('opacity','0.6');
+          plane.setAttribute('material','side: double; transparent: true;');
+          bubble.appendChild(plane);
+
+          const t = document.createElement('a-text');
+          t.setAttribute('value', this.data.title);
+          t.setAttribute('align','center'); t.setAttribute('color','white');
+          t.setAttribute('position','0 0.25 0.01'); t.setAttribute('width','2.6');
+          bubble.appendChild(t);
+
+          const d = document.createElement('a-text');
+          d.setAttribute('value', this.data.desc);
+          d.setAttribute('align','center'); d.setAttribute('color','white');
+          d.setAttribute('position','0 -0.20 0.01'); d.setAttribute('width','2.6');
+          d.setAttribute('wrap-count','42');
+          bubble.appendChild(d);
+
+          scene.appendChild(bubble);
+          setTimeout(()=>bubble.remove(), 5000);
+        });
+      }
+    });
+  </script>
 </body>
 </html>
-
